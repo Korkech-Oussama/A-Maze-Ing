@@ -27,7 +27,6 @@ from typing import List, Optional, Set, Tuple, Dict
 from mazegen.output_writer import write_output
 from mazegen import MazeGenerator, NORTH, EAST, SOUTH, WEST
 
-# ── ANSI helpers ──────────────────────────────────────────────
 RESET = "\033[0m"
 BOLD = "\033[1m"
 
@@ -101,7 +100,6 @@ def _strip_ansi(text: str) -> str:
     return ansi_escape.sub('', text)
 
 
-# ── Wall / floor character sets ───────────────────────────────
 WALL_SETS: List[Tuple[str, str, str]] = [
     ("\u2593", " ", "\u2022"),
     ("\u2588", "\u2591", "\u00b7"),
@@ -152,7 +150,6 @@ PRESETS: List[Tuple[Tuple[int, int, int], ...]] = [
     ),
 ]
 
-# ── Global state ──────────────────────────────────────────────
 WALL_SET_IDX: int = 0
 CELL_W: int = 2
 SHOW_42: bool = True
@@ -169,7 +166,6 @@ PULSE_WAVE: bool = False
 RAIN_EFFECT: bool = False
 PLASMA: bool = False
 
-# ── Rain state ────────────────────────────────────────────────
 _rain_drops: List[Tuple[int, float, float]] = []
 _rain_grid_w: int = 0
 
@@ -186,7 +182,6 @@ def _active_preset(user_preset: int) -> int:
     return 6 if NEON_CYBERPUNK else user_preset
 
 
-# ── Pulse wave ────────────────────────────────────────────────
 _PULSE_SPEED: float = 2.2
 _PULSE_FREQ: float = 0.55
 
@@ -209,7 +204,6 @@ def _pulse_colour(
     return r, g, b
 
 
-# ── Star field ────────────────────────────────────────────────
 _STAR_CHARS = ["\u00b7", ".", "+", "\u2726", "\u2727", "\u22c6"]
 _star_pool: List[Tuple[int, int, float, str]] = []
 _star_grid_size: Tuple[int, int] = (0, 0)
@@ -240,7 +234,6 @@ def _build_star_set(t: float) -> Dict[Tuple[int, int],
     return result
 
 
-# ── Rain effect ───────────────────────────────────────────────
 
 def _init_rain(DW: int) -> None:
     global _rain_drops, _rain_grid_w
@@ -276,7 +269,6 @@ def _build_rain_set(DH: int) -> Dict[Tuple[int, int], float]:
     return result
 
 
-# ── Plasma effect ─────────────────────────────────────────────
 
 def _plasma_colour(gx: int, gy: int, t: float) -> Tuple[int, int, int]:
     v = math.sin(gx * 0.30 + t * 1.1)
@@ -305,7 +297,6 @@ def _plasma_colour(gx: int, gy: int, t: float) -> Tuple[int, int, int]:
     )
 
 
-# ── Background wash ───────────────────────────────────────────
 _BG_MODE_NAMES = ["Wave", "Pulse", "Gradient", "Scanline", "Aurora"]
 
 
@@ -335,13 +326,11 @@ def _row_bg(t: float, row_frac: float) -> Tuple[int, int, int]:
     return r, g, b
 
 
-# ── 3-D shadow ────────────────────────────────────────────────
 def _shadow_fg(rgb: Tuple[int, int, int]) -> str:
     r, g, b = rgb
     return _fg(_clamp(r // 4), _clamp(g // 4), _clamp(b // 4))
 
 
-# ── 42 colour animation ───────────────────────────────────────
 def _c42(base: Tuple[int, int, int], t: float) -> Tuple[int, int, int]:
     r, g, b = base
     if not ANIMATE_42:
@@ -361,7 +350,6 @@ def _c42(base: Tuple[int, int, int], t: float) -> Tuple[int, int, int]:
     return r, g, b
 
 
-# ── HUD sidebar ───────────────────────────────────────────────
 _THEME_NAMES = ["STONE", "OCEAN", "VIOLET", "FOREST", "ABYSS", "MONO"]
 
 
@@ -441,11 +429,9 @@ def _build_hud(
     ]
 
 
-# ── Cell type constants ───────────────────────────────────────
 T_WALL, T_FLOOR, T_PATH, T_ENTRY, T_EXIT, T_42, T_CUR = range(7)
 
 
-# ── Core render ───────────────────────────────────────────────
 def _render(
     gen: MazeGenerator,
     show_path: bool,
@@ -633,7 +619,6 @@ def _render(
     return output
 
 
-# ── Interactive mode ──────────────────────────────────────────
 
 def run_interactive(
     gen: MazeGenerator,
@@ -662,7 +647,6 @@ def run_interactive(
     HUD_VIS = 24
     GAP = 2
 
-    # ── Footer: HUD (if on) + menu ────────────────────────────
     def _draw_footer(menu_rows_: List[str], buf_: str = "") -> None:
         w = sys.stdout.write
         hud_rows = (
@@ -690,7 +674,6 @@ def run_interactive(
         w(prompt_prefix + "  Choice \u203a " + buf_)
         sys.stdout.flush()
 
-    # ── Full clear + redraw ───────────────────────────────────
     def _full_draw(menu_rows_: List[str], buf_: str = "") -> None:
         w = sys.stdout.write
         w("\033[?25l\033[2J\033[H")
@@ -707,7 +690,6 @@ def run_interactive(
         w("\033[?25h")
         sys.stdout.flush()
 
-    # ── Repaint maze rows in-place (cursor jump, NO screen erase) ────
     def _redraw_maze_inplace(maze_lines: List[str]) -> None:
         w = sys.stdout.write
         w("\033[H")
@@ -736,14 +718,11 @@ def run_interactive(
         sys.stdout.flush()
         return footer_row
 
-    # ── Redraw footer in-place without touching the maze ─────────
     def _redraw_footer_inplace(menu_rows_: List[str], footer_row: int) -> None:
-        # Jump to footer row, erase everything below, then redraw clean
         sys.stdout.write(f"\033[{footer_row}H\033[J")
         _draw_footer(menu_rows_, "")
         sys.stdout.flush()
 
-    # ── Main loop ─────────────────────────────────────────────
     while True:
         wch, _, _ = _wall_set()
         pname = "NEON" if NEON_CYBERPUNK else _THEME_NAMES[user_preset % 6]
@@ -839,13 +818,11 @@ def run_interactive(
         tg_pw, tl_pw = _tog("~W", PULSE_WAVE)
         tg_rn, tl_rn = _tog("RN", RAIN_EFFECT)
         tg_pl, tl_pl = _tog("PL", PLASMA)
-        # Row 2a: six toggles (fits IW=50)
         st2 = f"{tg_ne}  {tg_bg}  {tg_3d}  {tg_st}  {tg_hd}  {tg_pw}"
         st2v = (
             tl_ne + 2 + tl_bg + 2 + tl_3d
             + 2 + tl_st + 2 + tl_hd + 2 + tl_pw
         )
-        # Row 2b: Rain + Plasma on their own line
         st3 = f"{tg_rn}  {tg_pl}"
         st3v = tl_rn + 2 + tl_pl
 
@@ -934,10 +911,8 @@ def run_interactive(
             "",
         ]
 
-        # ── Draw everything ───────────────────────────────────
         _full_draw(menu_rows)
 
-        # ── Input: live loop when animated effects are on ─────
         choice = ""
 
         if True:
@@ -975,8 +950,6 @@ def run_interactive(
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
-        # ── Choice handlers ───────────────────────────────────
-
         if choice == "1":
             _prepare_anim(menu_rows)
             for step in gen.generate_stepwise():
@@ -1009,7 +982,6 @@ def run_interactive(
                         t=time.time(), highlight=saved[i - 1],
                     )
                     _redraw_maze_inplace(frame)
-                    # Redraw footer so HUD path counter increments live
                     _redraw_footer_inplace(menu_rows, footer_row)
                     time.sleep(0.06)
                 gen.solution_path = saved
