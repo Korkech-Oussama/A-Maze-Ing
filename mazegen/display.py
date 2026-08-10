@@ -30,30 +30,24 @@ from mazegen import MazeGenerator, NORTH, EAST, SOUTH, WEST
 RESET = "\033[0m"
 BOLD = "\033[1m"
 
-
 def _fg(r: int, g: int, b: int) -> str:
     return f"\033[38;2;{r};{g};{b}m"
-
 
 def _bg(r: int, g: int, b: int) -> str:
     return f"\033[48;2;{r};{g};{b}m"
 
-
 def _clamp(v: int) -> int:
     return max(0, min(255, v))
-
 
 def _term_size() -> Tuple[int, int]:
     size = shutil.get_terminal_size()
     return size.columns, size.lines
-
 
 def _maze_dimensions(gen: MazeGenerator) -> Tuple[int, int]:
     CW = _cell_w()
     width = (2 * gen.width + 1) * CW
     height = (2 * gen.height + 1)
     return width, height
-
 
 def _check_terminal(gen: MazeGenerator) -> bool:
     cols, rows = _term_size()
@@ -93,12 +87,10 @@ def _check_terminal(gen: MazeGenerator) -> bool:
 
     return True
 
-
 def _strip_ansi(text: str) -> str:
     import re
     ansi_escape = re.compile(r"\033\[[^m]*m")
     return ansi_escape.sub('', text)
-
 
 WALL_SETS: List[Tuple[str, str, str]] = [
     ("\u2593", " ", "\u2022"),
@@ -110,7 +102,6 @@ WALL_SETS: List[Tuple[str, str, str]] = [
     ("\u25b2", " ", "\u25ba"),
     ("#", ".", "*"),
 ]
-
 
 PRESETS: List[Tuple[Tuple[int, int, int], ...]] = [
     # 0 STONE
@@ -173,18 +164,14 @@ _rain_grid_w: int = 0
 def _wall_set() -> Tuple[str, str, str]:
     return WALL_SETS[WALL_SET_IDX]
 
-
 def _cell_w() -> int:
     return CELL_W
-
 
 def _active_preset(user_preset: int) -> int:
     return 6 if NEON_CYBERPUNK else user_preset
 
-
 _PULSE_SPEED: float = 2.2
 _PULSE_FREQ: float = 0.55
-
 
 def _pulse_colour(
     base: Tuple[int, int, int],
@@ -203,11 +190,9 @@ def _pulse_colour(
     b = _clamp(int(base[2] * scale))
     return r, g, b
 
-
 _STAR_CHARS = ["\u00b7", ".", "+", "\u2726", "\u2727", "\u22c6"]
 _star_pool: List[Tuple[int, int, float, str]] = []
 _star_grid_size: Tuple[int, int] = (0, 0)
-
 
 def _init_stars(DW: int, DH: int, n: int = 55) -> None:
     global _star_pool, _star_grid_size
@@ -224,7 +209,6 @@ def _init_stars(DW: int, DH: int, n: int = 55) -> None:
         for _ in range(n)
     ]
 
-
 def _build_star_set(t: float) -> Dict[Tuple[int, int],
                                       Tuple[int, int, int, str]]:
     result: Dict[Tuple[int, int], Tuple[int, int, int, str]] = {}
@@ -232,8 +216,6 @@ def _build_star_set(t: float) -> Dict[Tuple[int, int],
         v = _clamp(int(70 + (math.sin(t * 1.6 + phase) + 1) * 90))
         result[(sr, sc)] = (v, v, _clamp(int(v * 0.5)), ch)
     return result
-
-
 
 def _init_rain(DW: int) -> None:
     global _rain_drops, _rain_grid_w
@@ -246,14 +228,12 @@ def _init_rain(DW: int) -> None:
         if random.random() < 0.40
     ]
 
-
 def _update_rain(DH: int) -> None:
     global _rain_drops
     _rain_drops = [
         (col, (row + spd * 0.6) % (DH + 10), spd)
         for col, row, spd in _rain_drops
     ]
-
 
 def _build_rain_set(DH: int) -> Dict[Tuple[int, int], float]:
     result: Dict[Tuple[int, int], float] = {}
@@ -267,8 +247,6 @@ def _build_rain_set(DH: int) -> Dict[Tuple[int, int], float]:
                 if result.get((gy, col), 0.0) < brightness:
                     result[(gy, col)] = brightness
     return result
-
-
 
 def _plasma_colour(gx: int, gy: int, t: float) -> Tuple[int, int, int]:
     v = math.sin(gx * 0.30 + t * 1.1)
@@ -296,9 +274,7 @@ def _plasma_colour(gx: int, gy: int, t: float) -> Tuple[int, int, int]:
         _clamp(int(pb * bright)),
     )
 
-
 _BG_MODE_NAMES = ["Wave", "Pulse", "Gradient", "Scanline", "Aurora"]
-
 
 def _row_bg(t: float, row_frac: float) -> Tuple[int, int, int]:
     if BG_MODE == 0:
@@ -325,11 +301,9 @@ def _row_bg(t: float, row_frac: float) -> Tuple[int, int, int]:
         b = _clamp(int((math.sin(t * 0.6 + row_frac * 7 + 2) + 1) * 70))
     return r, g, b
 
-
 def _shadow_fg(rgb: Tuple[int, int, int]) -> str:
     r, g, b = rgb
     return _fg(_clamp(r // 4), _clamp(g // 4), _clamp(b // 4))
-
 
 def _c42(base: Tuple[int, int, int], t: float) -> Tuple[int, int, int]:
     r, g, b = base
@@ -349,9 +323,7 @@ def _c42(base: Tuple[int, int, int], t: float) -> Tuple[int, int, int]:
         )
     return r, g, b
 
-
 _THEME_NAMES = ["STONE", "OCEAN", "VIOLET", "FOREST", "ABYSS", "MONO"]
-
 
 def _build_hud(
     gen: MazeGenerator, t: float, user_preset: int
@@ -428,9 +400,7 @@ def _build_hud(
         BOT,
     ]
 
-
 T_WALL, T_FLOOR, T_PATH, T_ENTRY, T_EXIT, T_42, T_CUR = range(7)
-
 
 def _render(
     gen: MazeGenerator,
@@ -617,8 +587,6 @@ def _render(
         output.append("".join(parts))
 
     return output
-
-
 
 def run_interactive(
     gen: MazeGenerator,
